@@ -1,0 +1,2 @@
+cloudflare-dns.com
+dns.google
