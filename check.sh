@@ -31,6 +31,8 @@ space() {
 
 # ---------------------------------------------------\
 
+echo -e "\nChecking from DNS server: ${CUSTOM_DNS}"
+
 for d in ${DOMAINs}; do
 
     Info "\n----------------------- Working with domain name: $d -----------------------"
