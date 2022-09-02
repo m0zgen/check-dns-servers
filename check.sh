@@ -1,6 +1,6 @@
 #!/bin/bash
 # Cretaed by Yevgeniy Gonvharov, https://sys-adm.in
-# DNS checker - Certificate date, HTTP 200
+# DNS checker - Certificate date, DNS resolve, HTTP 200
 
 # Envs
 # ---------------------------------------------------\
@@ -17,6 +17,7 @@ CHAT_ID="<ID>"
 # Domain list
 DOMAINs=`cat $SCRIPT_PATH/domains.txt`
 PORTs=`cat $SCRIPT_PATH/ports.txt`
+CUSTOM_DNS="1.1.1.1"
 
 # ---------------------------------------------------\
 
@@ -33,7 +34,7 @@ space() {
 for d in ${DOMAINs}; do
 
     Info "\n----------------------- Working with domain name: $d -----------------------"
-    ips=$(dig +short $d)
+    ips=$(dig @"$CUSTOM_DNS" +short $d)
 
     for ip in ${ips}; do
 
