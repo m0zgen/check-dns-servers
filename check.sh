@@ -5,7 +5,7 @@
 # Envs
 # ---------------------------------------------------\
 PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
-SCRIPT_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+SCRIPT_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd); cd $SCRIPT_PATH
 
 # Initial variables
 # ---------------------------------------------------\
@@ -14,10 +14,43 @@ SCRIPT_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 TOKEN="<TOKEN>"
 CHAT_ID="<ID>"
 
-# Domain list
-MAX_DAYS=10
-CUSTOM_DNS="1.1.1.1"
-DOMAINs=`cat $SCRIPT_PATH/domains.txt`
+# Checks arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -r|--resolver) _RESOLVER=1 _RESOLVER_DATA=$2; ;; # Custom resolver IP
+        -d|--days) _DAYS=1 _DAYS_DATA=$2; ;;
+        -a|--add) _ADD=1 _ADD_DATA=$2; ;; # Add domain to default.txt
+        -s|--sort) _SORT=1; ;;
+        -l|--list) _LIST=1 _LIST_DATA=$2; shift ;;
+        # -h|--help) usage ;; 
+        *) _DEFAULT=1 ;;
+    esac
+    shift
+done
+
+# Default Options
+if [[ "$_RESOLVER" -eq "1" ]]; then
+    CUSTOM_DNS="$_RESOLVER_DATA"
+else
+    CUSTOM_DNS="1.1.1.1"
+fi
+
+if [[ "$_DAYS" -eq "1" ]]; then
+    MAX_DAYS="$_DAYS_DATA"
+else
+    # Domain max days expires
+    MAX_DAYS=10
+fi
+
+if [[ "$_LIST" -eq "1" ]]; then
+    DOMAINs=`cat $_LIST_DATA`
+else
+    # Domain max days expires
+    DOMAINs=`cat $SCRIPT_PATH/domains.txt`
+fi
+
+
+
 PORTs=`cat $SCRIPT_PATH/ports.txt`
 
 # ---------------------------------------------------\
@@ -106,12 +139,12 @@ function getDNSInfo() {
                             expire_date=$(date  -d "${crt_end//notAfter=/}" '+%Y%m%d') 
                             left_days=$((($(date +%s -d ${expire_date})-$(date +%s -d ${curent_date}))/86400))
 
-                            echo "Current: $curent_date. Expire: $expire_date"
+                            # echo "Current: $curent_date. Expire: $expire_date"
 
                             if [[ "${left_days}" -lt "${MAX_DAYS}" ]]; then
-                                echo -e "[${RED}✓${NC}] Left days: ${RED}${BOLD}${left_days}. Need Update!${NC}"
+                                echo -e "[${RED}✓${NC}] Max days: ${PURPLE}${MAX_DAYS}${NC}. Left days: ${RED}${BOLD}${left_days}. Need Update!${NC}"
                             else
-                                echo -e "[${GREEN}✓${NC}] Left days: ${GREEN}${BOLD}${left_days}. OK${NC}"
+                                echo -e "[${GREEN}✓${NC}] Max days: ${YELLOW}${MAX_DAYS}${NC}. Left days: ${GREEN}${BOLD}${left_days}. OK${NC}"
                             fi
                         fi
 
@@ -131,7 +164,7 @@ function getDNSInfo() {
 # ---------------------------------------------------\
 
 if [[ "${_platform_type}" == "Linux" ]]; then
-    echo -e "Linux platform detected..."
+    echo -e "\n${GREEN}${BOLD}Linux platform detected...${NC}"
     getDNSInfo "Linux"
 elif [[ "${_platform_type}" == "Mac" ]]; then
     echo -e "MacOS platform detected..."
