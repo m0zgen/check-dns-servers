@@ -15,14 +15,26 @@ TOKEN="<TOKEN>"
 CHAT_ID="<ID>"
 
 # Domain list
+MAX_DAYS=7
+CUSTOM_DNS="1.1.1.1"
 DOMAINs=`cat $SCRIPT_PATH/domains.txt`
 PORTs=`cat $SCRIPT_PATH/ports.txt`
-CUSTOM_DNS="1.1.1.1"
 
 # ---------------------------------------------------\
 
+# And colors
+RED='\033[0;91m'
+GREEN='\033[0;92m'
+CYAN='\033[0;96m'
+YELLOW='\033[0;93m'
+PURPLE='\033[0;95m'
+BLUE='\033[0;94m'
+BOLD='\033[1m'
+WHiTE="\e[1;37m"
+NC='\033[0m'
+
 Info() {
-    echo -en "${1}${green}${2}${nc}\n"
+    echo -en "${1}${GREEN}${2}${NC}\n"
 }
 
 space() { 
@@ -87,6 +99,18 @@ function getDNSInfo() {
                         crt_end=`echo "$data" | grep 'notAfter='`
                         echo -e "Port: ${p}. Cert info - Start: ${crt_start//notBefore=/} / End: ${crt_end//notAfter=/}"
                         # printf "\rReleased: $crt_start; End: $crt_end"
+
+                        # if Linux
+                        curent_date=$(getDate)
+                        expire_date=$(date  -d "${crt_end//notAfter=/}" '+%Y%m%d') 
+                        left_days=$((($(date +%s -d 20221127)-$(date +%s -d 20221031))/86400))
+
+                        if [[ "${left_days}" -lt "${MAX_DAYS}" ]]; then
+                            echo -e "[${RED}✓${NC}] Left days: ${RED}${BOLD}${left_days}. Need Update!${NC}"
+                        else
+                            echo -e "[${GREEN}✓${NC}] Left days: ${GREEN}${BOLD}${left_days}. OK${NC}"
+                        fi
+
                     else
                         echo "Port: ${p}. Not available."
                     fi
