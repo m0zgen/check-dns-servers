@@ -1,1 +1,2 @@
-bld.sys-adm.in
+cloudflare-dns.com
+dns.google
