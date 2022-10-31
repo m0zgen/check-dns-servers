@@ -15,7 +15,7 @@ TOKEN="<TOKEN>"
 CHAT_ID="<ID>"
 
 # Domain list
-MAX_DAYS=7
+MAX_DAYS=10
 CUSTOM_DNS="1.1.1.1"
 DOMAINs=`cat $SCRIPT_PATH/domains.txt`
 PORTs=`cat $SCRIPT_PATH/ports.txt`
@@ -104,7 +104,9 @@ function getDNSInfo() {
                         if [[ "$1" == "Linux" ]]; then
                             curent_date=$(getDate)
                             expire_date=$(date  -d "${crt_end//notAfter=/}" '+%Y%m%d') 
-                            left_days=$((($(date +%s -d 20221127)-$(date +%s -d 20221031))/86400))
+                            left_days=$((($(date +%s -d ${expire_date})-$(date +%s -d ${curent_date}))/86400))
+
+                            echo "Current: $curent_date. Expire: $expire_date"
 
                             if [[ "${left_days}" -lt "${MAX_DAYS}" ]]; then
                                 echo -e "[${RED}✓${NC}] Left days: ${RED}${BOLD}${left_days}. Need Update!${NC}"
