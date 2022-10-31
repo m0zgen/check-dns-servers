@@ -101,14 +101,16 @@ function getDNSInfo() {
                         # printf "\rReleased: $crt_start; End: $crt_end"
 
                         # if Linux
-                        curent_date=$(getDate)
-                        expire_date=$(date  -d "${crt_end//notAfter=/}" '+%Y%m%d') 
-                        left_days=$((($(date +%s -d 20221127)-$(date +%s -d 20221031))/86400))
+                        if [[ "$1" == "Linux" ]]; then
+                            curent_date=$(getDate)
+                            expire_date=$(date  -d "${crt_end//notAfter=/}" '+%Y%m%d') 
+                            left_days=$((($(date +%s -d 20221127)-$(date +%s -d 20221031))/86400))
 
-                        if [[ "${left_days}" -lt "${MAX_DAYS}" ]]; then
-                            echo -e "[${RED}✓${NC}] Left days: ${RED}${BOLD}${left_days}. Need Update!${NC}"
-                        else
-                            echo -e "[${GREEN}✓${NC}] Left days: ${GREEN}${BOLD}${left_days}. OK${NC}"
+                            if [[ "${left_days}" -lt "${MAX_DAYS}" ]]; then
+                                echo -e "[${RED}✓${NC}] Left days: ${RED}${BOLD}${left_days}. Need Update!${NC}"
+                            else
+                                echo -e "[${GREEN}✓${NC}] Left days: ${GREEN}${BOLD}${left_days}. OK${NC}"
+                            fi
                         fi
 
                     else
