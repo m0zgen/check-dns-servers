@@ -53,3 +53,23 @@ DNS Port detected. Try to resolve Google DNS IP:
 
 ...
 ```
+
+## Additional options
+
+* `-r` - Custom resolver
+* `-l` - Custom list
+* `-d` - Max days for SSL certificate expires
+
+Example:
+```
+./check.sh -d 10 -l lists/my.txt -r 8.8.8.8
+...
+Linux platform detected...
+
+Checking from DNS server: 8.8.8.8
+
+...
+Port: 443. Cert info - Start: Sep 20 00:00:00 2022 GMT / End: Dec 19 23:59:59 2022 GMT
+[✓] Max days: 10. Left days: 50. OK
+...
+```
