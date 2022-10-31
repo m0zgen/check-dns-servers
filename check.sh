@@ -29,53 +29,87 @@ space() {
     echo -e ""
 }
 
+# Checks supporting distros
+checkDistro() {
+    # Checking distro
+    _DIST_TYPE="$(uname -s)"
+    case "${_DIST_TYPE}" in
+        Linux*)     _platform_type=Linux;;
+        Darwin*)    _platform_type=Mac;;
+        CYGWIN*)    _platform_type=Cygwin;;
+        MINGW*)     _platform_type=MinGw;;
+        *)          _platform_type="UNKNOWN:${_DIST_TYPE}"
+    esac
+    # echo ${_platform_type}
+}
+
+getDate() {
+    date '+%Y%m%d'
+}
+
 # ---------------------------------------------------\
 
-echo -e "\nChecking from DNS server: ${CUSTOM_DNS}"
+checkDistro
 
-for d in ${DOMAINs}; do
+function getDNSInfo() {
+    echo -e "\nChecking from DNS server: ${CUSTOM_DNS}"
 
-    Info "\n----------------------- Working with domain name: $d -----------------------"
-    ips=$(dig @"$CUSTOM_DNS" +short $d)
+    for d in ${DOMAINs}; do
 
-    for ip in ${ips}; do
+        Info "\n----------------------- Working with domain name: $d -----------------------"
+        ips=$(dig @"$CUSTOM_DNS" +short $d)
 
-        Info "\n----------------------- Starting from IP: $ip -----------------------"
+        for ip in ${ips}; do
 
-        for p in ${PORTs}; do
+            Info "\n----------------------- Starting from IP: $ip -----------------------"
 
-            # echo -e "\nChecking domain: ${d}. Port: $ip:$p"
-            if [[ "$p" -eq 53 ]]; then
+            for p in ${PORTs}; do
 
-                echo -e "\nDNS Port detected. Try to resolve Google DNS IP:"
-                response=`nslookup google.com ${ip} | grep -i 'address' | awk 'NR>1' | awk '{print $2}'`
-                if [ -z "$response" ]; then
-                    echo "Empty reply from ${ip} :( "
+                # echo -e "\nChecking domain: ${d}. Port: $ip:$p"
+                if [[ "$p" -eq 53 ]]; then
+
+                    echo -e "\nDNS Port detected. Try to resolve Google DNS IP:"
+                    response=`nslookup google.com ${ip} | grep -i 'address' | awk 'NR>1' | awk '{print $2}'`
+                    if [ -z "$response" ]; then
+                        echo "Empty reply from ${ip} :( "
+                    else
+                        echo -e "${response}"
+                    fi
+
                 else
-                    echo -e "${response}"
+
+                    echo -e '\x1dclose\x0d' | curl --silent -o /dev/null --connect-timeout 2 telnet://"${ip}":${p} 2>/dev/null
+                    if [[ $? -eq 0 ]]; then
+                        # openssl s_client -connect ${ip}:8443 -servername ${d} 2>/dev/null | openssl x509 -noout -dates
+                        data=`echo "Q" | openssl s_client -connect ${ip}:${p} -servername ${d} 2>/dev/null | openssl x509 -noout -dates`
+                        # cn_name=`openssl s_client -connect ${ip}:${p} -servername ${d} 2>/dev/null | grep 'subject=/CN=' | rev | cut -d'=' -f1 | rev`
+                        crt_start=`echo "$data" | grep 'notBefore='`
+                        crt_end=`echo "$data" | grep 'notAfter='`
+                        echo -e "Port: ${p}. Cert info - Start: ${crt_start//notBefore=/} / End: ${crt_end//notAfter=/}"
+                        # printf "\rReleased: $crt_start; End: $crt_end"
+                    else
+                        echo "Port: ${p}. Not available."
+                    fi
                 fi
 
-            else
+                
+            done
 
-                echo -e '\x1dclose\x0d' | curl --silent -o /dev/null --connect-timeout 2 telnet://"${ip}":${p} 2>/dev/null
-                if [[ $? -eq 0 ]]; then
-                    # openssl s_client -connect ${ip}:8443 -servername ${d} 2>/dev/null | openssl x509 -noout -dates
-                    data=`echo "Q" | openssl s_client -connect ${ip}:${p} -servername ${d} 2>/dev/null | openssl x509 -noout -dates`
-                    # cn_name=`openssl s_client -connect ${ip}:${p} -servername ${d} 2>/dev/null | grep 'subject=/CN=' | rev | cut -d'=' -f1 | rev`
-                    crt_start=`echo "$data" | grep 'notBefore='`
-                    crt_end=`echo "$data" | grep 'notAfter='`
-                    echo -e "Port: ${p}. Cert info - Start: ${crt_start//notBefore=/} / End: ${crt_end//notAfter=/}"
-                    # printf "\rReleased: $crt_start; End: $crt_end"
-                else
-                    echo "Port: ${p}. Not available."
-                fi
-            fi
-
-            
         done
 
     done
+}
 
-done
+# ---------------------------------------------------\
 
-# openssl s_client -connect 212.19.134.52:853 -servername bld.sys-adm.in
+if [[ "${_platform_type}" == "Linux" ]]; then
+    echo -e "Linux platform detected..."
+    getDNSInfo "Linux"
+elif [[ "${_platform_type}" == "Mac" ]]; then
+    echo -e "MacOS platform detected..."
+    getDNSInfo "Mac"
+else
+    getDNSInfo
+fi
+
+# openssl s_client -connect xxx.xxx.xx.x:853 -servername ns.server.local
